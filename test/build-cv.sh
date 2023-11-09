@@ -1,0 +1,1 @@
+pandoc -V 'geometry:margin=1cm' -V 'mainfont:Roboto-Regular.ttf' -o cv.pdf --pdf-engine=xelatex cv.md

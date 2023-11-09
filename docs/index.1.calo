@@ -1,0 +1,416 @@
+Ejecutable como documento HTML5
+    con autor allnulled
+    con nombre index
+    con versión 1
+<head>
+    <title>Plantillaje rápido</title>
+    <meta charset="utf8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="lib/win7.scoped.2.css" />
+    <script src="lib/ejs.min.js"></script>
+    <script src="lib/plantillaje-parser.js"></script>
+    <style>
+    html, body {
+      padding: 0 !important;
+      margin: 0 !important;
+      background-color: #333;
+    }
+      h5 {
+        background-color: #222;
+        color: white;
+        margin: 0;
+        padding: 8px;
+      }
+      .espaciado_1 {
+        padding: 4px;
+      }
+      .espaciado_1_abajo {
+        padding-bottom: 4px;
+      }
+      .espaciado_1_arriba {
+        padding-top: 4px;
+      }
+      .tabla_sin_bordes {
+        border-collapse: collapse;
+      }
+      .win7 textarea.texto_de_plantilla {
+        font-size: 10px;
+        width: 100%;
+        min-height: 150px;
+        resize: vertical;
+      }
+      .error_de_aplicacion {
+        position: fixed;
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        min-height: 80px;
+        max-height: 80px;
+        height: 80px;
+        background-color: red;
+        color: white;
+      }
+      .win7 button > span {
+        word-wrap: anywhere;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+    </style>
+</head>
+<body><div id="app"></div></body>.
+
+importo api nativa.
+
+creo PaginaDePlantilla como un componente vue2 con nombre "PaginaDePlantilla" con plantilla {
+  <div class="PaginaDePlantilla Component">
+    <h5>
+      <router-link to="/">Apps</router-link> » 
+      <router-link :to="'/app/' + $route.params.id_de_app">{{ root.apps[$route.params.id_de_app].nombre }}</router-link> »
+      {{ root.apps[$route.params.id_de_app].plantillas[$route.params.id_de_plantilla].nombre }}
+    </h5>
+    <div class="espaciado_1">
+      <table>
+        <tr>
+          <td style="width: 100%;">
+            <button style="width: 100%;" v-on:click="() => guardar_plantilla()">Guardar</button>
+          </td>
+          <td>
+            <button style="width: 100%;" v-on:click="() => renderizar_plantilla()">Renderizar</button>
+          </td>
+        </tr>
+      </table>
+      <div class="espaciado_1_arriba">
+        <textarea class="texto_de_plantilla" v-model="contenido_de_plantilla"></textarea>
+        <textarea v-if="renderizado_de_plantilla" class="texto_de_plantilla" v-model="renderizado_de_plantilla"></textarea>
+      </div>
+    </div>
+  </div>
+} con lógica {
+  retorno {
+    propiedad props como {
+      root: {
+        type: Object,
+        required: true
+      }
+    }.
+    método data donde {
+      retorno {
+        contenido_de_plantilla: "",
+        renderizado_de_plantilla: ""
+      }.
+    }.
+    propiedad methods como {
+      método asíncrono guardar_plantilla donde {
+        creo datos como this.root.obtener_datos().
+        asigno datos.apps[this.$route.params.id_de_app].plantillas[this.$route.params.id_de_plantilla].contenido como this.contenido_de_plantilla.
+        hago this.root.guardar_datos(datos).
+        hago this.root.refrescar_datos().
+      } en errores hago this.root.mostrar_error(error).
+      método asíncrono renderizar_plantilla donde {
+        creo ast como this.$window.Plantillaje_parser.parse(this.contenido_de_plantilla).
+        creo variable salida como "".
+        creo parametros como {}.
+        desde 0 hasta ast.length {
+          creo item como ast[index].
+          si item es tipo texto {
+            incremento salida en item.
+          } pero si item es tipo objeto {
+            desacoplo constantes { pregunta, valor } a partir de item.
+            creo respuesta como this.$window.prompt(pregunta, valor).
+            incremento salida en respuesta.
+            asigno parametros[pregunta] como respuesta.
+          }.
+        }.
+        creo plantilla como salida.
+        creo salida_final como asíncronamente this.$window.ejs.render(plantilla, { param: parametros }, { async: true }).
+        asigno this.renderizado_de_plantilla como salida_final.
+        hago this.$forceUpdate(true).
+      } en errores hago this.root.mostrar_error(error).
+    }.
+    método beforeMount donde {
+      creo datos como this.root.obtener_datos().
+      asigno this.contenido_de_plantilla como datos.apps[this.$route.params.id_de_app].plantillas[this.$route.params.id_de_plantilla].contenido.
+    }.
+  }.
+}.
+
+creo PaginaDeApp como un componente vue2 con nombre "PaginaDeApp" con plantilla {
+  <div class="PaginaDeApp Component">
+    <h5><router-link to="/">Apps</router-link> » {{ root.apps[$route.params.id].nombre }}</h5>
+    <div class="espaciado_1">
+      <button style="width: 100%;" v-on:click="() => crear_plantilla()">Crear plantilla</button>
+      <input style="width: 100%;margin-top: 5px;" type="text" v-model="buscador_de_plantillas" placeholder="buscar" />
+      <div class="espaciado_1_arriba">
+        <table class="tabla_sin_bordes">
+          <template v-for="plantilla, plantilla_index in root.apps[$route.params.id].plantillas">
+            <tr v-if="plantilla.nombre.indexOf(buscador_de_plantillas) !== -1" v-bind:key="'plantilla-' + plantilla_index">
+              <td style="width: 100%;">
+                <router-link style="width: 100%;" :to="'/app/' + $route.params.id + '/plantilla/' + plantilla_index">
+                  <button style="width: 100%; text-align: left;">
+                    <span>{{ plantilla.nombre }}</span>
+                  </button>
+                </router-link>
+              </td>
+              <td style="width: 1%;">
+                <button style="min-width: 20px;" v-on:click="() => bajar_item(plantilla_index)">⬇</button>
+              </td>
+              <td style="width: 1%;">
+                <button style="min-width: 20px;" v-on:click="() => subir_item(plantilla_index)">⬆</button>
+              </td>
+              <td style="width: 1%;">
+                <button style="min-width: 20px;" v-on:click="() => cambiar_nombre(plantilla_index)">↔</button>
+              </td>
+              <td style="width: 1%;">
+                <button style="min-width: 20px;" v-on:click="() => eliminar_plantilla($route.params.id, plantilla_index)">🗑</button>
+              </td>
+            </tr>
+          </template>
+        </table>
+      </div>
+    </div>
+  </div>
+} con lógica {
+  retorno {
+    propiedad props como {
+      root: {
+        type: Object,
+        required: true
+      }
+    }.
+    método data donde {
+      retorno {
+        buscador_de_plantillas: ""
+      }.
+    }.
+    propiedad methods como {
+      método asíncrono crear_plantilla donde {
+        creo nombre_de_plantilla como this.$window.prompt("¿Qué nombre de plantilla quieres?").
+        si nombre_de_plantilla no es tipo texto retorno.
+        si nombre_de_plantilla.length es igual que 0 retorno.
+        hago asíncronamente this.root.crear_plantilla(this.$route.params.id, nombre_de_plantilla).
+        hago this.root.refrescar_datos().
+      } en errores hago this.root.mostrar_error(error).
+      método asíncrono eliminar_plantilla con (app_index, plantilla_index) donde {
+        creo confirmacion como this.$window.confirm("¿Seguro que quieres eliminar la plantilla " + plantilla_index + "?").
+        si confirmacion no es igual que true retorno.
+        creo datos como this.root.obtener_datos().
+        hago datos.apps[app_index].plantillas.splice(plantilla_index, 1).
+        hago this.root.guardar_datos(datos).
+        hago this.root.refrescar_datos().
+      } en errores hago this.root.mostrar_error(error).
+      método subir_item con (item_index) donde {
+        si item_index es igual que 0 retorno.
+        creo datos como this.root.obtener_datos().
+        creo lista_original como datos.apps[this.$route.params.id].plantillas.
+        si lista_original[item_index-1] es tipo indefinido retorno.
+        creo temporal_anterior como lista_original[item_index-1].
+        creo temporal_actual como lista_original[item_index].
+        asigno lista_original[item_index] como temporal_anterior.
+        asigno lista_original[item_index-1] como temporal_actual.
+        hago this.root.guardar_datos(datos).
+        hago this.root.refrescar_datos().
+      }.
+      método bajar_item con (item_index) donde {
+        creo datos como this.root.obtener_datos().
+        creo lista_original como datos.apps[this.$route.params.id].plantillas.
+        si item_index es igual que lista_original.length-1 retorno.
+        si lista_original[item_index+1] es tipo indefinido retorno.
+        creo temporal_siguiente como lista_original[item_index+1].
+        creo temporal_actual como lista_original[item_index].
+        asigno lista_original[item_index] como temporal_siguiente.
+        asigno lista_original[item_index+1] como temporal_actual.
+        hago this.root.guardar_datos(datos).
+        hago this.root.refrescar_datos().
+      }.
+      método cambiar_nombre con (item_index) donde {
+        creo datos como this.root.obtener_datos().
+        creo lista_original como datos.apps[this.$route.params.id].plantillas.
+        creo nombre_original como lista_original[item_index].nombre.
+        creo nuevo_nombre como this.$window.prompt("¿Qué nuevo nombre quieres para «" + nombre_original + "»?", nombre_original).
+        si nuevo_nombre no es tipo texto y nuevo_nombre.length no es mayor que 0 retorno.
+        asigno lista_original[item_index].nombre como nuevo_nombre.
+        hago this.root.guardar_datos(datos).
+        hago this.root.refrescar_datos().
+      }.
+    }.
+  }.
+}.
+
+creo PaginaDeInicio como un componente vue2 con nombre "PaginaDeInicio" con plantilla {
+  <div class="PaginaDeInicio Component">
+    <h5>Apps</h5>
+    <div class="espaciado_1">
+      <table>
+        <tr>
+          <td style="width: 100%;">
+            <button style="width: 100%;" v-on:click="() => crear_app()">Crear app</button>
+          </td>
+          <td style="width: auto;">
+            <button v-on:click="() => exportar_datos()">Exportar</button>
+          </td>
+        </tr>
+      </table>
+      <div class="espaciado_1_arriba">
+        <table class="tabla_sin_bordes">
+          <tr v-for="app, app_index in root.apps" v-bind:key="'app-' + app_index">
+            <td style="width: 100%;">
+              <router-link style="width: 100%;" :to="'/app/' + app_index">
+                <button style="width: 100%; text-align: left;">{{ app.nombre }}</button>
+              </router-link>
+            </td>
+            <td style="width: 1%;">
+              <button style="min-width: 20px;" v-on:click="() => cambiar_nombre(app_index)">↔</button>
+            </td>
+            <td>
+              <button style="min-width: 20px;" v-on:click="() => eliminar_app(app_index)">🗑</button>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+} con lógica {
+  retorno {
+    propiedad props como {
+      root: {
+        type: Object,
+        required: true
+      }
+    }.
+    método data donde {
+      retorno {}.
+    }.
+    propiedad methods como {
+      método exportar_datos donde {
+        creo datos como this.root.obtener_datos().
+        creo mensaje como "localStorage.APP_DE_PLANTILLAJE = " + (datos serializado como JSON).
+        imprimo mensaje.
+        lanzo un nuevo Error(mensaje).
+      } en errores hago this.root.mostrar_error(error).
+      método asíncrono crear_app donde {
+        creo nombre_de_app como this.$window.prompt("¿Qué nombre de app quieres?").
+        si nombre_de_app no es tipo texto retorno.
+        si nombre_de_app.length es igual que 0 retorno.
+        hago asíncronamente this.root.crear_app(nombre_de_app).
+        hago this.root.refrescar_datos().
+      } en errores hago this.root.mostrar_error(error).
+      método asíncrono eliminar_app con (app_index) donde {
+        creo confirmacion como this.$window.confirm("¿Seguro que quieres eliminar la app " + app_index + "?").
+        si confirmacion no es igual que true retorno.
+        creo datos como this.root.obtener_datos().
+        hago datos.apps.splice(app_index, 1).
+        hago this.root.guardar_datos(datos).
+        hago this.root.refrescar_datos().
+      } en errores hago this.root.mostrar_error(error).
+      método cambiar_nombre con (item_index) donde {
+        creo datos como this.root.obtener_datos().
+        creo lista_original como datos.apps.
+        creo nombre_original como lista_original[item_index].nombre.
+        creo nuevo_nombre como this.$window.prompt("¿Qué nuevo nombre quieres para «" + nombre_original + "»?", nombre_original).
+        si nuevo_nombre no es tipo texto y nuevo_nombre.length no es mayor que 0 retorno.
+        asigno lista_original[item_index].nombre como nuevo_nombre.
+        hago this.root.guardar_datos(datos).
+        hago this.root.refrescar_datos().
+      }.
+    }.
+  }.
+}.
+
+creo App como una aplicación vue2 con nombre "App" con rutas [{
+    propiedad path como "/app/:id_de_app/plantilla/:id_de_plantilla".
+    propiedad name como "PaginaDePlantilla".
+    propiedad component como PaginaDePlantilla.
+    propiedad props como {}.
+}, {
+    propiedad path como "/app/:id".
+    propiedad name como "PaginaDeApp".
+    propiedad component como PaginaDeApp.
+    propiedad props como {}.
+}, {
+    propiedad path como "/".
+    propiedad name como "Home".
+    propiedad component como PaginaDeInicio.
+    propiedad props como {}.
+}] con traducciones {
+    propiedad es como {}.
+    propiedad en como {}.
+    propiedad ca como {}.
+} con plantilla {
+  <div class="App Component Castelog-app win7">
+    <router-view :root="this"></router-view>
+    <div class="error_de_aplicacion" v-if="error">
+      <textarea style="height: 100%; width: 100%; resize: vertical;" v-model="error"></textarea>
+    </div>
+  </div>
+} con estilos {
+    html {}
+    body {}
+    .Component {}
+    .App {}
+} con lógica {
+  retorno {
+    método data donde {
+      retorno {
+        apps: {},
+        error: false
+      }.
+    }.
+    propiedad methods como {
+      método refrescar_datos donde {
+        creo datos como this.obtener_datos().
+        asigno this.apps como datos.apps.
+        hago this.$forceUpdate(true).
+      } en errores hago this.mostrar_error(error).
+      método obtener_datos donde {
+        creo variable datos_json como localStorage.APP_DE_PLANTILLAJE.
+        si datos_json no es tipo texto {
+          asigno datos_json como {
+            apps: []
+          } textualizado.
+        }.
+        creo datos como JSON.parse(datos_json).
+        retorno datos.
+      } en errores hago this.mostrar_error(error).
+      método guardar_datos con (datos) donde {
+        creo datos_json como JSON.stringify(datos).
+        asigno localStorage.APP_DE_PLANTILLAJE como datos_json.
+      } en errores hago this.mostrar_error(error).
+      método crear_app con (nombre) donde {
+        creo app como {
+          nombre: nombre,
+          plantillas: []
+        }.
+        creo datos como this.obtener_datos().
+        ### asigno datos.apps[nombre] como app.
+        apendizo app en datos.apps.
+        hago this.guardar_datos(datos).
+      } en errores hago this.mostrar_error(error).
+      método crear_plantilla con (app_index, nombre_de_plantilla) donde {
+        creo plantilla como {
+          nombre: nombre_de_plantilla,
+          contenido: ""
+        }.
+        creo datos como this.obtener_datos().
+        ### asigno datos.apps[nombre_de_app].plantillas[nombre_de_plantilla] como plantilla.
+        apendizo plantilla en datos.apps[app_index].plantillas.
+        hago this.guardar_datos(datos).
+      } en errores hago this.mostrar_error(error).
+      método mostrar_error con (error) donde {
+        imprimo error.
+        asigno this.error como error.message.
+        hago this.$forceUpdate(true).
+        hago setTimeout(una lambda donde {
+          asigno this.error como false.
+          hago this.$forceUpdate(true).
+        }, 10 * 1000).
+      }.
+    }.
+    propiedad watch como {}.
+    método beforeMount donde {
+      hago this.refrescar_datos().
+    }.
+    método mounted donde {
+    }.
+  }.
+} montada en "#app".

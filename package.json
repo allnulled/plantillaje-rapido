@@ -1,0 +1,19 @@
+{
+  "name": "plantillaje-rapido",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "npm run build-parser && npm run build-index",
+    "build-index": "cp docs/index.1.html docs/index.html",
+    "build-parser": "npx pegjs -o docs/lib/plantillaje-parser.js --format globals --export-var Plantillaje_parser docs/lib/plantillaje-parser.pegjs",
+    "start": "npx http-server -c-1 docs -o index.1.html",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
